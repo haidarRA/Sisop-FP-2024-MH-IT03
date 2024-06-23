@@ -270,15 +270,15 @@ void edit_password(const char *csvpath, const char *username, const char *new_pa
         char *rest = line;
         int count = 0;
         int token_index = 0;
-        char modified_line[512] = {0}; // Initialize the modified_line buffer
-        char current_username[256] = {0}; // Buffer to store current username
+        char modified_line[512] = {0};
+        char current_username[256] = {0};
 
         while ((token = strtok_r(rest, ",", &rest))) {
             count++;
             if (count == 2) { // Second field (username field)
                 strncpy(current_username, token, sizeof(current_username) - 1);
             }
-            if (count == 3 && strcmp(current_username, username) == 0) { // Third field (password field)
+            if (count == 3 && strcmp(current_username, username) == 0) {
                 snprintf(modified_line + token_index, sizeof(modified_line) - token_index, "%s,", new_pass);
                 token_index += strlen(new_pass) + 1;  // +1 for the comma
             } else {
@@ -438,16 +438,14 @@ int main() {
 	        continue;
 	    }
       
-/*      
             int bytes_read5 = read(new_socket, room, sizeof(room));
             if (bytes_read5 <= 0) {
                 printf("Invalid data received from client\n");
                 close(new_socket);
                 continue;
             }
-*/
+
 	    int spaces = count_spaces(input);
-//	    sprintf(result, "%d", spaces);
 	    char* u_path = get_path();
 
             char dcpath[256];
@@ -482,6 +480,31 @@ int main() {
 
 		    fclose(fch);
 	    	}
+	    	else if((strcmp(c1, "CHAT") == 0)) {
+	    	    if(strcmp(room, "") != 0) {
+			char chatpath[256];
+			sprintf(chatpath, "%s/%s/%s/chat.csv", dcpath, channel, room);
+			
+			int id = 1;
+			FILE *fchat = fopen(chatpath, "a+");
+			while(fgets(line, sizeof(line), fchat)) {
+			    id++;
+			}
+			
+		  	time_t currentTime;
+		  	struct tm *localTime;
+		  	char date[24];
+		  	currentTime = time(NULL);
+		  	localTime = localtime(&currentTime);
+		  	strftime(date, 24, "%d/%m/%y %H:%M:%S", localTime);
+		  	
+			fprintf(fchat, "%s,%d,%s,%s", date, id, name, c2);
+			sprintf(result, "Chat %s berhasil dikirim", c2);
+	    	    }
+	    	    else {
+	    	    	sprintf(result, "Anda masih belum masuk room");
+	    	    }
+	    	}
 	    	else if((strcmp(c1, "LIST") == 0) && (strcmp(c2, "USER") == 0)) {
 		    if(strstr(rank, "ROOT")) {
 		        char userpath[256];
@@ -512,9 +535,7 @@ int main() {
 		    	sprintf(result, "Anda tidak mempunyai akses untuk melihat seluruh user");
     		    }
 	    	}
-	    	else if(strcmp(c1, "REMOVE") == 0) {
-	    	    //sprintf(result, "%s %s", c1, c2);
-	    	    
+	    	else if(strcmp(c1, "REMOVE") == 0) {	    	    
 	    	    if(strstr(rank, "ROOT")) {
 	    	    	char userpath[256];
 	    	    	sprintf(userpath, "%s/users.csv", dcpath);
@@ -564,7 +585,6 @@ int main() {
 		    fclose(fauth);
 		    
 		    if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
-		    //if(strstr(rank, "ROOT")) {
                         char chpath[256];
                         sprintf(chpath, "%s/channels.csv", dcpath);
                     
@@ -611,11 +631,9 @@ int main() {
 		    }
 		    else {
 		    	sprintf(result, "Anda tidak mempunyai akses untuk menghapus channel %s", c3);
-		    	//sprintf(result, "%s", rankch);
 		    }
                 }
 		else if ((strcmp(c1, "CREATE") == 0) && (strcmp(c2, "ROOM") == 0)) {
-		    //sprintf(result, "create room");
 		
 		    if(strcmp(channel, "") != 0) {
 			char rankch[40];
@@ -657,7 +675,6 @@ int main() {
 	    }	    
 	    if(spaces == 3) {
 	    	sscanf(input, "%s %s %s %s", c1, c2, c3, c4);
-		//sprintf(result, "2 spaces");
 	    }
 	    if(spaces == 4) {
 	    	sscanf(input, "%s %s %s %s %s", c1, c2, c3, c4, c5);
@@ -727,10 +744,6 @@ int main() {
 		    else {
 		        sprintf(result, "Channel %s sudah ada", c3);
 		    }
-		    //}
-		    //else {
-		    	//sprintf(result, "Anda tidak mempunyai akses untuk membuat channel %s", c3);
-		    //}
 	    	}
 		else if((strcmp(c1, "EDIT") == 0) && (strcmp(c2, "CHANNEL") == 0) && (strcmp(c4, "TO") == 0)) { //edit channel
 		    char rankch[40];
