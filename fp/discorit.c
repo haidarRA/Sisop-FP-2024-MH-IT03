@@ -101,8 +101,6 @@ int count_spaces(char *str) {
 int main(int argc, char *argv[]) {
     char* u_path = get_path();
 
-//    printf("%d\n", argc);
-
     char dcpath[256];
     sprintf(dcpath, "%s/DiscorIT", u_path);
 
@@ -134,11 +132,6 @@ int main(int argc, char *argv[]) {
 	fclose(fch);
     }
 
-/*    for(int i = 0; i < argc; i++) {
-    	printf("%d %s\n", i, argv[i]);
-    }
-    printf("\n");
-*/
     char line[1024];
 
     if(strcmp(argv[1], "REGISTER") == 0) {
@@ -195,42 +188,23 @@ int main(int argc, char *argv[]) {
     	    strcpy(channel, "");
     	    strcpy(room, "");
     	    fclose(fuser);
-    	    //while(strcmp(input, "EXIT") != 0) {
     	    while(true) {
-    	    	//printf("Current channel: %s\n", channel);
-    	    	//printf("Current room: %s\n", room);
 		int sock = 0;
 		struct sockaddr_in serv_addr;
     	    	printf("%s ", right);
     	    	fgets(input, 125, stdin);
     	    	input[strcspn(input, "\n")] = '\0';
-//    	    	printf("%d\n", count_spaces(input));
-/*
-		if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		    perror("Socket creation failed");
-		    exit(EXIT_FAILURE);
-		}
 
-		serv_addr.sin_family = AF_INET;
-		serv_addr.sin_port = htons(PORT);
-
-		if (inet_pton(AF_INET, IP, &serv_addr.sin_addr) <= 0) {
-		    perror("Invalid address/ Address not supported");
-		    exit(EXIT_FAILURE);
-		}
-
-		if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-		    perror("Connection failed");
-		    exit(EXIT_FAILURE);
-		}
-		*/
 		if(strcmp(input, "EXIT") == 0) {
-		    //printf("Channel: %d\nRoom: %d\n", is_channel, is_room);
 		    if((is_channel == 1) && (is_room == 0)) { //saat di channel
 		    	sprintf(right, "[%s]", name);
 		    	is_channel = 0;
 		    	strcpy(channel, "");
-		    	//printf("channel\n");
+		    }
+		    else if((is_channel == 1) && (is_room == 1)) {
+		    	sprintf(right, "[%s/%s]", name, channel);
+		    	is_room = 0;
+		    	strcpy(room, "");
 		    }
 		    else if((is_channel == 0) && (is_room == 0)) { //tidak masuk di channel (masih di luar)
 		    	//printf("di luar\n");
@@ -270,7 +244,6 @@ int main(int argc, char *argv[]) {
 			    }
 			    fclose(fauth);
 			    
-			    //printf("%d\n", user_in_channel);
     			    rank[strcspn(rank, "\n")] = '\0';
 			    if((user_in_channel == 0) && (strstr(rank, "USER"))) { //jika user belum ada auth dan bukan root
 			    	char ch_pass[50];
@@ -298,7 +271,7 @@ int main(int argc, char *argv[]) {
 			    	}
 			    }
 			    else if((user_in_channel == 1) || (strstr(rank, "ROOT"))) { //jika user sudah ada auth di channel atau merupakan root
-			   	sprintf(right, "[%s/%s]", argv[2], c2);
+			   	sprintf(right, "[%s/%s]", name, c2);
 			    	strcpy(channel, c2);
 			    	is_channel = 1;
 			    }
@@ -306,7 +279,11 @@ int main(int argc, char *argv[]) {
 	    	        else {
 	    	            printf("Channel %s tidak ditemukan\n", c2);
 	    	        }
-		    	//printf("%s\n", channel);
+	    	    }
+	    	    else if(is_channel == 1 && is_room == 0) { //room
+	    	    	sprintf(right, "[%s/%s/%s]", name, channel, c2);
+	    	    	strcpy(room, c2);
+	    	    	is_room = 1;
 	    	    }
 		}
 		else {
@@ -344,11 +321,11 @@ int main(int argc, char *argv[]) {
 		        perror("Send failed");
 		        exit(EXIT_FAILURE);
 		    }
-		    /*
+		    
 		    if (send(sock, &room, sizeof(room), 0) < 0) {
 		        perror("Send failed");
 		        exit(EXIT_FAILURE);
-		    }*/
+		    }
 		    if (recv(sock, &result, sizeof(result), 0) < 0) {
 		        perror("Receive failed");
 		        exit(EXIT_FAILURE);
