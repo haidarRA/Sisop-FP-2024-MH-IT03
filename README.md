@@ -1563,3 +1563,183 @@ Hasil setelah penghapusan channel:
 Jika user biasa (bukan admin channel maupun root) ingin menghapus channel:
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/808423cb-1bdd-492e-bddb-a0b25e93e719)
+
+## 15. Create Room
+
+Untuk membuat room, user dapat menggunakan command `CREATE ROOM <nama_room>` setelah masuk channel. Hanya admin channel dan root saja yang bisa membuat room.
+
+Code:
+```
+		else if ((strcmp(c1, "CREATE") == 0) && (strcmp(c2, "ROOM") == 0)) { //create room
+		    if(strcmp(is_channel, "0") != 0) {
+		    //if (channel != NULL) {
+			char rankch[40];
+			char authpath[256];
+			sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, channel);
+			FILE *fauth = fopen(authpath, "r+");
+			while(fgets(line, sizeof(line), fauth)) {
+			    if(strstr(line, name)) {
+			        char *rank_channel = split_comma(line, 3);
+			        sprintf(rankch, "%s", rank_channel);
+			        break;
+			    }
+			}
+			fclose(fauth);
+			    
+			if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+			    char roompath[256];
+			    sprintf(roompath, "%s/%s/%s", dcpath, channel, c3);
+			    if(mkdir(roompath, 0777) ==  -1) {
+				printf("Can't create room"); 
+			    }
+			    
+			    char chatpath[256];
+			    sprintf(chatpath, "%s/%s/%s/chat.csv", dcpath, channel, c3);
+			    FILE *fchat = fopen(chatpath, "a+");
+			    fclose(fchat);
+			    
+			    sprintf(result, "Room %s dibuat\n", c3);
+			    
+			    char logpath[256];
+			    sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+			    time_t current_time = time(NULL);
+			    struct tm *local_time = localtime(&current_time);
+			    char date[25];
+			    strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			    FILE *flog = fopen(logpath, "a+");
+			    fprintf(flog, "[%s] admin buat room %s\n", date, c3);
+			    fclose(flog);
+			}
+			else {
+			    sprintf(result, "Anda tidak mempunyai akses untuk membuat room %s\n", c3);
+			}
+		    }
+		    else {
+		    	sprintf(result, "Anda belum masuk channel\n");
+		    }
+		}
+```
+
+Code ini akan membuat directory room di dalam directory channel yang dilengkapi dengan chat.csv di dalam directory room yang baru dibentuk. Untuk pembuatan room baru ini akan dicatat di file user.log.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/513fd0ab-2dc9-4b6c-bd2d-02fa3a600e22)
+
+Hasil setelah pembuatan room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/f0a652ef-eff8-4135-be37-5ea6b400a1e9)
+
+Jika user biasa (bukan admin channel maupun root) ingin membuat room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/afb18556-9096-4044-8209-59cd8a045cc5)
+
+Isi file user.log setelah pembuatan room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/75b3f4af-0dca-4a73-b120-c53af29cedae)
+
+## 16. Edit Room
+
+Untuk mengedit room pada sebuah channel, user dapat menggunakan command `EDIT ROOM <room_lama> TO <room_baru>` setelah masuk ke channel. Hanya admin channel dan root saja yang dapat menggunakan command ini.
+
+Code:
+```
+		else if ((strcmp(c1, "EDIT") == 0) && (strcmp(c2, "ROOM") == 0) && (strcmp(c4, "TO") == 0)) { //edit room
+		    if (strcmp(is_channel, "0") != 0) {
+		        char rankch[40];
+		        char authpath[256];
+		        sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, channel);
+		        FILE *fauth = fopen(authpath, "r+");
+		        while(fgets(line, sizeof(line), fauth)) {
+		        	if(strstr(line, name)) {
+		    	        char *rank_channel = split_comma(line, 3);
+		    	        sprintf(rankch, "%s", rank_channel);
+		    	        break;
+		    	    }
+		        }
+		        fclose(fauth);
+		    
+		        if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+			    char old_path[256];
+			    sprintf(old_path, "%s/%s/%s", dcpath, channel, c3);
+			
+			    char new_path[256];
+			    sprintf(new_path, "%s/%s/%s", dcpath, channel, c5);
+                    
+                        	char chpath[256];
+                    	    sprintf(chpath, "%s/%s", dcpath, channel);
+                    	
+		            struct dirent *de;
+		  
+		            DIR *dr = opendir(chpath); 
+		  
+		            if (dr == NULL) { 
+			        printf("Could not open current directory" ); 
+		            } 
+		   	
+		   	    int room_found = 0;
+		            while ((de = readdir(dr)) != NULL) {
+			        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, "admin") == 0) {
+			          continue;
+			        }
+			        if (strcmp(de->d_name, c3) == 0) {
+			    	    room_found = 1;
+			        }
+		  	    }
+		            closedir(dr);   
+
+                            if (room_found == 1) {
+                                rename(old_path, new_path);
+			        sprintf(result, "%s berhasil diubah menjadi %s\n", c3, c5);
+			        
+			        char logpath[256];
+			        sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+			        time_t current_time = time(NULL);
+			        struct tm *local_time = localtime(&current_time);
+			        char date[25];
+			        strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			        FILE *flog = fopen(logpath, "a+");
+			        fprintf(flog, "[%s] admin edit room %s jadi %s\n", date, c3, c5);
+			        fclose(flog);
+                            } 
+                            else {
+			        sprintf(result, "Room %s tidak ditemukan\n", c3);
+                    	    }
+		        }
+		        else {
+		    	    sprintf(result, "Anda tidak mempunyai akses untuk edit room %s\n", c3);
+		        }
+		    }
+		    else {
+			sprintf(result, "Anda masih belum masuk channel\n");
+		    }
+                }
+```
+
+Code ini akan mengecek apakah room sudah ada atau belum. Jika room masih belum ada, maka server akan memberikan output ke client bahwa room tidak ditemukan. Namun, jika room ini sudah ada, maka nama dari directory room tersebut akan diganti. Pengubahan nama room ini akan dicatat di user.log.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/75d9c1e4-7d52-48c0-a8d8-07617b436342)
+
+Hasil setelah edit nama room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/dff39b3e-667c-427c-a518-31184bac05de)
+
+Isi dari user.log setelah edit room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/ec5cef50-71b4-4ca7-8a23-a79acc1e232e)
+
+Jika ingin edit room yang tidak ada:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/70343dac-0bc4-4ba1-b4cd-010e5e8663ad)
+
+
+Jika user biasa (bukan admin channel maupun root) mencoba untuk edit room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/d2fd3719-dcf9-4da9-886d-2e57d816d2da)
+
