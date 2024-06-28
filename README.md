@@ -1063,3 +1063,223 @@ Jika digunakan oleh user biasa:
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/9c7e5113-190d-477c-9b36-751da256ffde)
 
+## 11. Remove User dari DiscorIT
+
+Untuk remove user dari DiscorIT, dapat menggunakan command `REMOVE <username>`. Hanya root yang dapat menggunakan command ini.
+
+Code:
+```
+	    	else if(strcmp(c1, "REMOVE") == 0) { //remove user (bukan di channel, di satu discorit)
+	    	    if(strstr(rank, "ROOT")) {
+	    	    	char userpath[256];
+	    	    	sprintf(userpath, "%s/users.csv", dcpath);
+	    	    	
+	    	    	int user_exists = 0;
+	    	    	
+		        FILE *fuser = fopen(userpath, "r");
+	    	    	char line[256];
+	    	    	while(fgets(line, sizeof(line), fuser)) {
+	    	    	    if(strstr(line, c2)) {
+	    	    	    	user_exists = 1;
+	    	    	    	break;
+	    	    	    }
+	    	    	}
+	    	    	
+                        if (!user_exists) {
+			    sprintf(result, "User %s tidak ditemukan\n", c2);
+                        } 
+                        else {
+                            delete_row(userpath, c2);
+                            reorder_ids(userpath);
+		    	    sprintf(result, "%s berhasil dihapus\n", c2);
+                    	}
+	    	    }
+	    	    else {
+		    	sprintf(result, "Anda tidak mempunyai akses untuk menghapus user %s\n", c2);
+	    	    }
+	    	}
+```
+
+Code ini akan menghapus user dari file users.csv dengan bantuan function `delete_row` dan menggunakan function `reorder_ids` untuk mengurutkan kembali ID user setelah penghapusan.
+
+Utility function:
+```
+void delete_row(const char *filepath, const char *channel_name) {
+    FILE *file = fopen(filepath, "r");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    char temp_filepath[256];
+    snprintf(temp_filepath, sizeof(temp_filepath), "%s.temp", filepath);
+    FILE *temp_file = fopen(temp_filepath, "w");
+    if (!temp_file) {
+        perror("Error opening temporary file");
+        fclose(file);
+        return;
+    }
+
+    char line[512];
+    while (fgets(line, sizeof(line), file)) {
+        if (!strstr(line, channel_name)) {
+            fputs(line, temp_file);
+        }
+    }
+
+    fclose(file);
+    fclose(temp_file);
+
+    if (remove(filepath) != 0) {
+        perror("Error deleting the original file");
+        return;
+    }
+    if (rename(temp_filepath, filepath) != 0) {
+        perror("Error renaming the temporary file");
+        return;
+    }
+}
+
+void reorder_ids(const char *filepath) {
+    FILE *file = fopen(filepath, "r");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    char temp_filepath[256];
+    snprintf(temp_filepath, sizeof(temp_filepath), "%s.temp", filepath);
+    FILE *temp_file = fopen(temp_filepath, "w");
+    if (!temp_file) {
+        perror("Error opening temporary file");
+        fclose(file);
+        return;
+    }
+
+    char line[512];
+    int id = 1;
+    while (fgets(line, sizeof(line), file)) {
+        char *comma_pos = strchr(line, ',');
+        if (comma_pos) {
+            fprintf(temp_file, "%d%s", id, comma_pos);
+            id++;
+        }
+    }
+
+    fclose(file);
+    fclose(temp_file);
+
+    if (remove(filepath) != 0) {
+        perror("Error deleting the original file");
+        return;
+    }
+    if (rename(temp_filepath, filepath) != 0) {
+        perror("Error renaming the temporary file");
+        return;
+    }
+}
+```
+
+Function `delete_row` akan menghapus string yang mengandung suatu substring pada sebuah file.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/47a12974-70c7-4141-91bf-2c7825d3b249)
+
+Isi dari users.csv setelah penghapusan:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/bc4c6185-d6e5-41f5-93e4-7c87c3943dd2)
+
+## 12. Create Channel
+
+Untuk membuat channel, user dapat menggunakan command `CREATE CHANNEL <nama_channel> -k <key>`. Semua user dapat menggunakan command ini, dan user yang menggunakan command ini untuk membuat sebuah channel akan langsung diangkat menjadi admin dari channel tersebut. Jika channel yang ingin dibuat sudah ada, maka channel tersebut tidak jadi dibuat.
+
+Code:
+```
+	    	if((strcmp(c1, "CREATE") == 0) && (strcmp(c2, "CHANNEL") == 0) && (strcmp(c4, "-k") == 0)) { //create channel
+		    char chpathd[256];
+		    sprintf(chpathd, "%s/%s", dcpath, c3);
+			    
+		    char chpath[256];
+		    sprintf(chpath, "%s/channels.csv", dcpath);
+		    
+		    FILE *fch = fopen(chpath, "a+");
+		    int channel_exists = 0;
+    		    int id = 1;
+		    while(fgets(line, sizeof(line), fch)) {
+	       	        if(strstr(line, c3)) {
+	    	    	    channel_exists = 1;
+	    	        }
+	    	        id++;
+	    	    }
+			    
+		    if((directory_exists(chpathd) == 0) && (channel_exists == 0)) {
+			if(mkdir(chpathd, 0777) ==  -1) {
+			    printf("Can't create channel"); 
+			}
+			
+			char *bch = crypt(c5, SALT);
+			
+			if (bch == NULL) {
+			  perror("crypt");
+			  return 1;
+			}
+					
+			fprintf(fch, "%d,%s,%s\n", id, c3, bch);
+			fclose(fch);
+			
+			char adminpath[256];
+			sprintf(adminpath, "%s/admin", chpathd);
+			
+			if(mkdir(adminpath, 0777) ==  -1) {
+			    printf("Can't create directory for administrator"); 
+			}
+			
+			char authpath[256];
+			sprintf(authpath, "%s/auth.csv", adminpath);
+			FILE *fauth = fopen(authpath, "a");
+			
+		        char admin_name[40];
+		        sprintf(admin_name, "%s", name);
+		        
+			if(strstr(rank, "ROOT")) {
+			    fprintf(fauth, "1,%s,ROOT\n", name);
+			}
+			else {
+			    fprintf(fauth, "1,%s,ADMIN\n", admin_name);
+			}
+			fclose(fauth);
+			
+			char logpath[256];
+			sprintf(logpath, "%s/user.log", adminpath);
+			FILE *flog = fopen(logpath, "a");
+			fclose(flog);
+			
+			sprintf(result, "Channel %s dibuat\n", c3);
+		    }
+		    else {
+		        sprintf(result, "Channel %s sudah ada\n", c3);
+		    }
+	    	}
+```
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/991bf4fb-c898-4902-96db-ecf2e0ae9bbf)
+
+Setelah pembuatan channel:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/7c181452-8119-4544-ad7a-f9baac758ad8)
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/6457baa3-a35d-4650-a346-4553cc8813b1)
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/6edf8c05-3f25-452a-a994-d5bd4cdf067f)
+
+Isi dari file auth.csv dari channel yang baru dibuat:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/0ef423fe-198b-41ff-8807-6b54d294b450)
+
+Jika ingin membuat channel yang sudah ada:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/0afdcc53-a195-4e14-b876-a12465c68c46)
+
