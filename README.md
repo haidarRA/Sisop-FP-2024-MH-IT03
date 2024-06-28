@@ -419,7 +419,7 @@ Code:
 ```
 
 Untuk melihat seluruh user yang ada di DiscorIT, hanya root saja yang bisa menggunakan command `LIST USER`. Sedangkan untuk melihat seluruh user yang ada di sebuah channel, semua user dapat menggunakan command `LIST USER`.
-Code ini akan mencari seluruh nama dari user yang ada di file users.csv (untuk user di DiscorIT) atau auth.csv (untuk user di channel) menggunakan function split_comma.
+Code ini akan mencari seluruh nama dari user yang ada di file users.csv (untuk user di DiscorIT) atau auth.csv (untuk user di channel) menggunakan function `split_comma`.
 
 Demonstrasi:
 
@@ -430,3 +430,98 @@ Jika melihat seluruh user yang ada di DiscorIT (dengan user root):
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/f53faa9b-58c5-4f0f-9f36-b40761f72d3e)
 
 ## 5. List Room
+
+Untuk list seluruh room yang ada di sebuah channel, dapat menggunakan command `LIST ROOM` dalam sebuah channel.
+
+Code:
+```
+		else if ((strcmp(c1, "LIST") == 0) && (strcmp(c2, "ROOM") == 0)) { //list room
+		    if (strcmp(is_channel, "0") != 0) {
+		    //if (channel != NULL) {
+			char chpath[256];
+			sprintf(chpath, "%s/%s", dcpath, channel);
+		        struct dirent *de;
+		  
+		        DIR *dr = opendir(chpath); 
+		  
+		        if (dr == NULL) { 
+			    printf("Could not open current directory" ); 
+		        } 
+		   
+		        while ((de = readdir(dr)) != NULL) {
+			    if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, "admin") == 0) {
+			      continue;
+			    }
+			    strcat(result, de->d_name);
+			    strcat(result, " ");
+		  	}
+		  	strcat(result, "\n");
+		        closedir(dr);     
+		    } 
+		    else {
+			sprintf(result, "Anda masih belum masuk channel\n");
+		    }
+		}
+```
+
+Code ini akan menampilkan seluruh directory yang merepresentasikan room yang ada di dalam directory channel. Untuk setiap room yang ada di directory channel akan ditambahkan ke output.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/8a77eade-8a78-4a70-b6ff-439655b99edd)
+
+Jika belum masuk channel:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/aa7f39e7-7026-4824-9bc7-86ae9ebb76ae)
+
+## 6. Chat
+
+User dapat mengirim chat pada room dengan command `CHAT "<text>"` setelah masuk di sebuah room. Setelah chat dikirim, maka chat akan langsung ditulis di file chat.csv pada directory room beserta dengan tanggal dan waktu, id, serta username dari pengirim.
+
+Code:
+
+```
+		else if ((strcmp(c1, "CHAT") == 0)) { //chat
+		    if (strcmp(is_room, "0") != 0) {
+		    //if (room != NULL) {
+			char chatpath[256];
+			sprintf(chatpath, "%s/%s/%s/chat.csv", dcpath, channel, room);
+		        
+			int id = 1;
+			FILE *fchat = fopen(chatpath, "a+");
+			while (fgets(line, sizeof(line), fchat)) {
+			    id++;
+			}
+
+			time_t current_time = time(NULL);
+			struct tm *local_time = localtime(&current_time);
+			char date[25];
+			strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+
+			fprintf(fchat, "%s,%d,%s,%s\n", date, id, name, c2);
+			fclose(fchat);
+			
+			char logpath[256];
+			sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+			
+			FILE *flog = fopen(logpath, "a+");
+			fprintf(flog, "[%s] %s chat %s di room %s\n", date, name, c2, room);
+			fclose(flog);
+		    } 
+		    else {
+			sprintf(result, "Anda masih belum masuk room\n");
+		    }
+		}
+```
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/de371746-709a-4d2a-97b9-712dfb10a709)
+
+Isi dari file chat.csv setelah chat dikirim:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/fcdc757a-d102-4087-82b2-f8b227e5b0b6)
+
+Jika mencoba untuk chat di luar room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/850f866f-73d9-4382-a10d-f551cd48fc32)
