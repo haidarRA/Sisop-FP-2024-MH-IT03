@@ -2259,6 +2259,27 @@ Setelah ada chat baru, maka tampilan chat pada program monitor.c juga akan diper
 
 Untuk permasalahan kami ada beberapa saat pengerjaan, yaitu sebagai berikut.
 1. Terkadang server tidak memberi output ke client (kadang null, kadang kosong, dan sebagainya).
+
+![Screenshot from 2024-06-22 22-15-59](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/83325ca5-a784-49a4-85e6-a5b6bb49865a)
+
 2. Server memberikan output string acak (kebanyakan mengandung simbol �) di depan output yang asli.
+
+![Screenshot from 2024-06-22 14-23-07](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/f4a10bb5-df19-4121-989b-450e62787acb)
+
+![Screenshot from 2024-06-25 23-24-34](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/fea5ca48-d9aa-4b6f-a730-7aec358361d0)
+
 3. Saat membuat channel, nama admin pertama pada channel tersebut yang tesimpan di file auth.csv inkonsisten (kadang ada, kadang kosong / tidak ada).
+
+![Screenshot from 2024-06-23 16-09-02](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/fb41d90f-0554-4a49-8f56-e8ebd30554f4)
+
+![Screenshot from 2024-06-23 16-11-42](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/5cd3f1c2-81da-44a7-8a6f-6cb0a2f3498f)
+
 4. Saat mencoba untuk mengirimkan command dari client ke server, ada masalah dimana tidak bisa input command lagi di input (seperti client DiscorIT sudah tidak berfungsi lagi).
+
+![Screenshot from 2024-06-23 16-10-58](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/33082e69-eb3b-4af1-b0cb-e5d7d2d0348f)
+
+![Screenshot from 2024-06-23 18-44-30](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/0f85e92d-53e4-4b82-afe4-c0193a385ce1)
+
+# Revisi
+
+Untuk revisi dari asisten tidak ada, tetapi karena final project ini belum selesai saat pengumpulan pada hari Minggu, 23 Juni 2024, maka revisi final project ini adalah diselesaikan sampai akhir.
