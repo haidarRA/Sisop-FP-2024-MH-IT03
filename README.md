@@ -2239,3 +2239,18 @@ Isi file auth.csv pada directory channel:
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/93e2e898-9097-4054-a1a6-f4b1ad805761)
 
 ## 21. Monitoring Chat
+
+Monitoring chat dapat dilakukan dengan menggunakan program monitor.c. Sebelum menggunakan program monitor.c, user harus login dulu dengan menggunakan command `./monitor LOGIN <username> -p <pass>` (sama seperti yang ada di client DiscorIT). Setelah login, user dapat melihat chat dari suatu room dengan command `-channel <nama_channel> -room <nama_room>`.
+Contoh penggunaan:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/2ec79af4-3ee4-4772-88e9-1137eda3e153)
+
+Setelah menjalankan command, user dapat memantau chat di room yang dipilih.
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/81ee46f8-df3b-450b-8978-96fba7293b41)
+
+Setelah ada chat baru, maka tampilan chat pada program monitor.c juga akan diperbarui.
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/f616cbc5-d1f5-4c4e-a4f2-25925cab6d39)
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/8727eca6-1348-4854-9d43-3f89cf7cd161)
