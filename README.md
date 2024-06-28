@@ -1743,3 +1743,367 @@ Jika user biasa (bukan admin channel maupun root) mencoba untuk edit room:
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/d2fd3719-dcf9-4da9-886d-2e57d816d2da)
 
+## 17. Delete Room
+
+Untuk delete room pada channel, user dapat menggunakan command `DEL ROOM <nama_room>` untuk menghapus room berdasarkan nama atau `DEL ROOM <nama_room>` untuk menghapus seluruh room yang ada pada channel. Hanya admin channel dan root saja yang dapat menjalankan command ini.
+
+Code:
+```
+		else if ((strcmp(c1, "DEL") == 0) && (strcmp(c2, "ROOM") == 0) && (strcmp(c3, "ALL") != 0)) { //delete room (id)
+		    if(strcmp(is_channel, "0") != 0) {
+		        char rankch[40];
+		        char authpath[256];
+		        sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, channel);
+		        FILE *fauth = fopen(authpath, "r+");
+		        while(fgets(line, sizeof(line), fauth)) {
+		    	    if(strstr(line, name)) {
+		    	        char *rank_channel = split_comma(line, 3);
+		    	        sprintf(rankch, "%s", rank_channel);
+		    	        break;
+		    	    }
+		        }
+		        fclose(fauth);
+		    
+		        if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+			    char roompath[256];
+			    sprintf(roompath, "%s/%s/%s", dcpath, channel, c3);
+                    
+                    	    char chpath[256];
+                    	    sprintf(chpath, "%s/%s", dcpath, channel);
+                    	
+		            struct dirent *de;
+		  
+		            DIR *dr = opendir(chpath); 
+		  
+		            if (dr == NULL) { 
+			        printf("Could not open current directory" ); 
+		            } 
+		   	
+		   	    int room_found = 0;
+		            while ((de = readdir(dr)) != NULL) {
+			        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, "admin") == 0) {
+			          continue;
+			        }
+			        if (strcmp(de->d_name, c3) == 0) {
+			        	room_found = 1;
+			        }
+		  	    }
+		            closedir(dr);   
+
+                            if (room_found == 1) {
+                                int ret = remove_directory(roompath);
+                                if (ret == 0) {
+		    		    sprintf(result, "%s berhasil dihapus\n", c3);
+		    		    
+			            char logpath[256];
+			            sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+			            time_t current_time = time(NULL);
+			            struct tm *local_time = localtime(&current_time);
+			            char date[25];
+			            strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			            FILE *flog = fopen(logpath, "a+");
+			            fprintf(flog, "[%s] admin hapus room %s\n", date, c3);
+			            fclose(flog);
+                                } 
+                                else {
+                                    sprintf(result, "Failed to delete room %s\n", c3);
+                                }
+                            } 
+                            else {
+			        sprintf(result, "Room %s tidak ditemukan\n", c3);
+                    	    }
+		        }
+		        else {
+		    	    sprintf(result, "Anda tidak mempunyai akses untuk menghapus room %s\n", c3);
+		        }
+		    }
+		    else {
+		    	sprintf(result, "Anda belum masuk channel\n");
+		    }
+                }
+		else if ((strcmp(c1, "DEL") == 0) && (strcmp(c2, "ROOM") == 0) && (strcmp(c3, "ALL") == 0)) { //delete room (all)
+		    if(strcmp(is_channel, "0") != 0) {
+		        char rankch[40];
+		        char authpath[256];
+		        sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, channel);
+		        FILE *fauth = fopen(authpath, "r+");
+		        while(fgets(line, sizeof(line), fauth)) {
+		        	if(strstr(line, name)) {
+		    	        char *rank_channel = split_comma(line, 3);
+		    	        sprintf(rankch, "%s", rank_channel);
+		    	        break;
+		    	    }
+		        }
+		        fclose(fauth);
+		    
+		        if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+			    char roompath[256];
+                    
+                    	    char chpath[256];
+                    	    sprintf(chpath, "%s/%s", dcpath, channel);
+                    	
+		            struct dirent *de;
+		  
+		            DIR *dr = opendir(chpath); 
+		  
+		            if (dr == NULL) { 
+			        printf("Could not open current directory" ); 
+		            } 
+		   	
+		            while ((de = readdir(dr)) != NULL) {
+			        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, "admin") == 0) {
+			          continue;
+			        }
+			        else {
+				    sprintf(roompath, "%s/%s/%s", dcpath, channel, de->d_name);
+                                    int ret = remove_directory(roompath);
+                                    if (ret != 0) {
+                                        sprintf(result, "Failed to delete channel %s\n", de->d_name);
+                                    }
+			        }
+		  	    }
+		            closedir(dr);   
+
+		    	    sprintf(result, "Semua room dihapus\n");
+
+		            char logpath[256];
+		            sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+			
+		            time_t current_time = time(NULL);
+		            struct tm *local_time = localtime(&current_time);
+		            char date[25];
+		            strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+			
+		            FILE *flog = fopen(logpath, "a+");
+		            fprintf(flog, "[%s] admin hapus semua room\n", date);
+		            fclose(flog);
+		        }
+		        else {
+		    	    sprintf(result, "Anda tidak mempunyai akses untuk menghapus semua room\n");
+		        }
+		    }
+		    else {
+		    	sprintf(result, "Anda belum masuk channel\n");
+		    }
+                }
+```
+
+Code di atas akan menghapus room berdasarkan nama maupun semua room pada sebuah channel. Penghapusan room (baik berdasarkan nama maupun semua) akan dicatat di user.log.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/49805448-0a14-4c6a-a660-3c0c17386a8e)
+
+Hasil setelah penghapusan room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/c65490cd-514e-4041-a84c-fdebf38ff766)
+
+Isi dari user.log setelah penghapusan room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/a932debc-c6de-40f6-b983-a0d344e1f3d8)
+
+Jika user biasa (bukan admin channel maupun root) mencoba untuk menghapus room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/5226214f-a3e2-4ffd-be75-3f25fad6468e)
+
+## 18. Ban dan Unban User
+
+Untuk ban user dari channel, user dapat menggunakan command `BAN <username>` untuk ban user dan command `UNBAN <username>` untuk membatalkan ban user. Ketika user diban, maka rank/role nya akan diubah menjadi "BANNED" dan tidak bisa join channel. Sedangkan jika user di-unban, maka rank/rolenya diubah kembali menjadi "USER" dan bisa join channel. Untuk proses ban maupun unban menggunakan function `change_rank`. Hanya admin channel dan root saja yang bisa menggunakan command ini.
+
+Code:
+```
+		else if (strcmp(c1, "BAN") == 0) { //ban user dari channel
+		    if(strcmp(is_channel, "0") != 0) {
+		    //if (channel != NULL) {
+			char rankch[40];
+			char authpath[256];
+			sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, channel);
+			FILE *fauth = fopen(authpath, "r+");
+			while(fgets(line, sizeof(line), fauth)) {
+			    if(strstr(line, name)) {
+			        char *rank_channel = split_comma(line, 3);
+			        sprintf(rankch, "%s", rank_channel);
+			        break;
+			    }
+			}
+			fclose(fauth);
+			    
+			if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+			    fauth = fopen(authpath, "r+");
+			    int user_exists = 0;
+			    while(fgets(line, sizeof(line), fauth)) {
+			        if(strstr(line, c2)) {
+				    user_exists = 1;
+			            break;
+			        }
+			    }
+			    fclose(fauth);
+			    
+			    if(user_exists == 1) {
+    			        change_rank(authpath, c2, "BANNED");
+			        sprintf(result, "%s diban\n", c2);
+			        
+			        char logpath[256];
+			        sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+			        time_t current_time = time(NULL);
+			        struct tm *local_time = localtime(&current_time);
+			        char date[25];
+			        strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			        FILE *flog = fopen(logpath, "a+");
+			        fprintf(flog, "[%s] admin ban %s\n", date, c2);
+			        fclose(flog);
+			    }
+			    else {
+			        sprintf(result, "User %s tidak ditemukan\n", c2);
+			    }
+			}
+			else {
+			    sprintf(result, "Anda tidak mempunyai akses untuk ban user %s\n", c2);
+			}
+		    }
+		    else {
+		    	sprintf(result, "Anda belum masuk channel\n");
+		    }
+		}
+		else if (strcmp(c1, "UNBAN") == 0) { //unban user dari channel
+		    if(strcmp(is_channel, "0") != 0) {
+		    //if (channel != NULL) {
+			char rankch[40];
+			char authpath[256];
+			sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, channel);
+			FILE *fauth = fopen(authpath, "r+");
+			while(fgets(line, sizeof(line), fauth)) {
+			    if(strstr(line, name)) {
+			        char *rank_channel = split_comma(line, 3);
+			        sprintf(rankch, "%s", rank_channel);
+			        break;
+			    }
+			}
+			fclose(fauth);
+			    
+			if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+			    fauth = fopen(authpath, "r+");
+			    int user_exists = 0;
+			    while(fgets(line, sizeof(line), fauth)) {
+			        if(strstr(line, c2)) {
+				    user_exists = 1;
+			            break;
+			        }
+			    }
+			    fclose(fauth);
+			    
+			    if(user_exists == 1) {
+    			        change_rank(authpath, c2, "USER");
+			        sprintf(result, "%s kembali\n", c2);
+			        
+			        char logpath[256];
+			        sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+			        time_t current_time = time(NULL);
+			        struct tm *local_time = localtime(&current_time);
+			        char date[25];
+			        strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			        FILE *flog = fopen(logpath, "a+");
+			        fprintf(flog, "[%s] admin unban %s\n", date, c2);
+			        fclose(flog);
+			    }
+			    else {
+			        sprintf(result, "User %s tidak ditemukan\n", c2);
+			    }
+			}
+			else {
+			    sprintf(result, "Anda tidak mempunyai akses untuk ban user %s\n", c2);
+			}
+		    }
+		    else {
+		    	sprintf(result, "Anda belum masuk channel\n");
+		    }
+		}
+```
+
+Utility function:
+```
+void change_rank(const char *csvpath, const char *username, const char *new_role) {
+    FILE *file = fopen(csvpath, "r");
+    if (!file) {
+        perror("Failed to open file");
+        return;
+    }
+
+    char temp_filepath[256];
+    snprintf(temp_filepath, sizeof(temp_filepath), "%s.temp", csvpath);
+    FILE *temp = fopen(temp_filepath, "w");
+    if (!temp) {
+        fclose(file);
+        perror("Failed to create temp file");
+        return;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        char *token;
+        char *line_copy = strdup(line);
+
+        token = strtok(line_copy, ",");
+        fprintf(temp, "%s,", token);
+
+        token = strtok(NULL, ",");
+        fprintf(temp, "%s,", token);
+
+        if (strcmp(token, username) == 0) {
+            fprintf(temp, "%s\n", new_role);
+        } else {
+            token = strtok(NULL, "\n");
+            fprintf(temp, "%s\n", token);
+        }
+
+        free(line_copy);
+    }
+
+    fclose(file);
+    fclose(temp);
+
+    remove(csvpath);
+    rename(temp_filepath, csvpath);
+}
+```
+
+Dengan function ini, rank/role dari user pada channel akan diubah dengan string token.
+
+Demonstrasi (ban):
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/69e93d69-8d0d-4ada-95c7-225360e844bb)
+
+Rank/role user setelah diban:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/1eb4dbae-ab8a-4951-bd2a-3f01d6f3396d)
+
+Ketika user yang dibanned mencoba untuk join channel:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/e0d58110-b45c-485a-b05a-df0a2478323d)
+
+Demonstrasi (unban):
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/aa442e39-4067-4cf8-b8a0-cc539f42b518)
+
+Rank/role user setelah unban:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/5df4b086-8acc-448d-8276-061b3898eceb)
+
+User yang di-unban jika ingin masuk ke channel kembali:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/537f73dc-b762-4269-a55e-97f19d846a23)
+
+Isi dari user.log setelah ban dan unban:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/c1722f30-eb96-4fd6-9eb0-74f5f181ffa2)
+
+Jika user biasa (bukan admin channel maupun root) ingin ban user:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/08690ff4-bbb0-4b3d-94f6-0d799bbf7811)
+
