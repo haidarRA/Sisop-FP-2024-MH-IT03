@@ -2175,3 +2175,67 @@ Isi file user.log setelah kick:
 Ketika user biasa (bukan admin channel maupun root) ingin kick user lain:
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/9dd56573-4ad3-4033-9091-172c17afbb15)
+
+## 20. Edit Profile Sendiri (username dan password)
+
+Untuk edit profile, user dapat menggunakan command `EDIT PROFILE SELF -u <new_username>` untuk ganti username dan command `EDIT PROFILE SELF -p <new_pass>` untuk ganti password.
+
+Code:
+```
+		else if((strcmp(c1, "EDIT") == 0) && (strcmp(c2, "PROFILE") == 0) && (strcmp(c3, "SELF") == 0) && (strcmp(c4, "-u") == 0)) { //edit nama sendiri
+		    char userpath[256];
+		    sprintf(userpath, "%s/users.csv", dcpath);
+		    
+		    edit_username(userpath, name, c5);
+		    
+		    struct dirent *de;
+			  
+		    DIR *dr = opendir(dcpath); 
+			  
+		    if (dr == NULL) { 
+			printf("Could not open current directory" ); 
+		    } 
+		   	
+		    while ((de = readdir(dr)) != NULL) {
+			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, "admin") == 0) {
+			    continue;
+			}
+			else {
+			    char user_channel[256];
+			    sprintf(user_channel, "%s/%s/admin/auth.csv", dcpath, de->d_name);
+			    edit_username(user_channel, name, c5);
+			}
+		    }
+		    closedir(dr);   
+		    
+		    sprintf(result, "%s|Profil diupdate\n", c5);
+                }
+		else if((strcmp(c1, "EDIT") == 0) && (strcmp(c2, "PROFILE") == 0) && (strcmp(c3, "SELF") == 0) && (strcmp(c4, "-p") == 0)) { //edit pass sendiri
+		    char userpath[256];
+		    sprintf(userpath, "%s/users.csv", dcpath);
+		    
+		    char *buser = crypt(c5, SALT);
+			
+		    if (buser == NULL) {
+		      perror("crypt");
+		      return 1;
+		    }
+			    
+                    edit_password(userpath, name, buser);
+		    sprintf(result, "Profil diupdate\n");
+                }
+```
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/61d36a49-56bd-4798-bc96-835303d17e47)
+
+Isi file users.csv setelah edit profile:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/a6829082-fbda-4b35-97fa-75b46e26ff84)
+
+Isi file auth.csv pada directory channel:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/93e2e898-9097-4054-a1a6-f4b1ad805761)
+
+## 21. Monitoring Chat
