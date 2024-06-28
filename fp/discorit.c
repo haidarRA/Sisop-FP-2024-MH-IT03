@@ -98,6 +98,21 @@ int count_spaces(char *str) {
     return count;
 }
 
+void split_string(const char* input, char* parts[], const char* delimiter) {
+    char* temp = strdup(input);
+    char* token;
+    int i = 0;
+
+    token = strtok(temp, delimiter);
+    while (token != NULL && i < 5) {
+        parts[i] = strdup(token);
+        token = strtok(NULL, delimiter);
+        i++;
+    }
+
+    free(temp);
+}
+
 int main(int argc, char *argv[]) {
     char* u_path = get_path();
 
@@ -179,7 +194,7 @@ int main(int argc, char *argv[]) {
 	    	    sprintf(rank, "%s", split_comma(check_rank, 4));
     	        }
     	    }
-   	    char input[125], result[100];
+   	    char input[125], result[2048], agg[260];
     	    char right[60], name[40];
     	    sprintf(name, "%s", argv[2]);
 	    sprintf(right, "[%s]", argv[2]);
@@ -191,23 +206,47 @@ int main(int argc, char *argv[]) {
     	    while(true) {
 		int sock = 0;
 		struct sockaddr_in serv_addr;
+
     	    	printf("%s ", right);
     	    	fgets(input, 125, stdin);
     	    	input[strcspn(input, "\n")] = '\0';
 
 		if(strcmp(input, "EXIT") == 0) {
 		    if((is_channel == 1) && (is_room == 0)) { //saat di channel
+			char logpath[256];
+			sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+			time_t current_time = time(NULL);
+			struct tm *local_time = localtime(&current_time);
+			char date[25];
+			strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			FILE *flog = fopen(logpath, "a+");
+			fprintf(flog, "[%s] %s keluar dari channel %s\n", date, name, channel);
+			fclose(flog);
+			
 		    	sprintf(right, "[%s]", name);
 		    	is_channel = 0;
 		    	strcpy(channel, "");
 		    }
-		    else if((is_channel == 1) && (is_room == 1)) {
+		    else if((is_channel == 1) && (is_room == 1)) { //saat di room
+			char logpath[256];
+			sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+			time_t current_time = time(NULL);
+			struct tm *local_time = localtime(&current_time);
+			char date[25];
+			strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			FILE *flog = fopen(logpath, "a+");
+			fprintf(flog, "[%s] %s keluar dari room %s\n", date, name, room);
+			fclose(flog);
+			
 		    	sprintf(right, "[%s/%s]", name, channel);
 		    	is_room = 0;
 		    	strcpy(room, "");
 		    }
 		    else if((is_channel == 0) && (is_room == 0)) { //tidak masuk di channel (masih di luar)
-		    	//printf("di luar\n");
 		    	break;
 		    }
 		}
@@ -230,7 +269,7 @@ int main(int argc, char *argv[]) {
 	    	        }
 	    	        fclose(fch);
 	    	        
-	    	        if(channel_exists = 1) { //proses masuk channel
+	    	        if(channel_exists == 1) { //proses masuk channel
 			    char rankch[40];
 			    char authpath[256], *chpass1, *chpass2;
 			    int user_in_channel = 0;
@@ -254,7 +293,6 @@ int main(int argc, char *argv[]) {
 			    	chpass1 = split_comma(check_channel, 3);
 			    	int can_pass = strcmp(chpass1, chpass2);   
 			    	if(can_pass == 10) {
-	    	    	    	    //sprintf(right, "[%s/%s]", argv[2], c2);
 			    	    int id = 1;
 			    	    fauth = fopen(authpath, "a+");
 			    	    while(fgets(line, sizeof(line), fauth)) {
@@ -265,25 +303,106 @@ int main(int argc, char *argv[]) {
 			    	    strcpy(channel, c2);
 	    	    	    	    sprintf(right, "[%s/%s]", name, c2);
 			    	    is_channel = 1;
+			    	    
+				    char logpath[256];
+				    sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+				    time_t current_time = time(NULL);
+				    struct tm *local_time = localtime(&current_time);
+				    char date[25];
+				    strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+				    FILE *flog = fopen(logpath, "a+");
+				    fprintf(flog, "[%s] %s masuk ke channel %s\n", date, name, c2);
+				    fclose(flog);
 			    	}
 			    	else if(can_pass != 0) {
 			    	    printf("Gagal masuk channel %s\n", c2);
 			    	}
 			    }
 			    else if((user_in_channel == 1) || (strstr(rank, "ROOT"))) { //jika user sudah ada auth di channel atau merupakan root
-			   	sprintf(right, "[%s/%s]", name, c2);
-			    	strcpy(channel, c2);
-			    	is_channel = 1;
+				char rankch[40];
+				char authpath[256];
+				sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, c2);
+				FILE *fauth = fopen(authpath, "r+");
+				while(fgets(line, sizeof(line), fauth)) {
+			    	    if(strstr(line, name)) {
+			        	char *rank_channel = split_comma(line, 3);
+			        	sprintf(rankch, "%s", rank_channel);
+			        	break;
+			    	    }
+				}
+				fclose(fauth);
+				
+			    	if(strstr(rankch, "BANNED")) { //jika user diban di channel
+			    	    printf("Anda telah diban. Silahkan menghubungi admin\n");
+			    	}
+			    	else {
+			   	    sprintf(right, "[%s/%s]", name, c2);
+			    	    strcpy(channel, c2);
+			    	    is_channel = 1;
+			    	    
+				    char logpath[256];
+				    sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+				    time_t current_time = time(NULL);
+				    struct tm *local_time = localtime(&current_time);
+				    char date[25];
+				    strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+				    FILE *flog = fopen(logpath, "a+");
+				    fprintf(flog, "[%s] %s masuk ke channel %s\n", date, name, c2);
+				    fclose(flog);
+			    	}
 			    }
 	    	        }
 	    	        else {
 	    	            printf("Channel %s tidak ditemukan\n", c2);
 	    	        }
+	    	        //comment this if this doesn't work
+	    	        channel_exists = 0;
 	    	    }
 	    	    else if(is_channel == 1 && is_room == 0) { //room
-	    	    	sprintf(right, "[%s/%s/%s]", name, channel, c2);
-	    	    	strcpy(room, c2);
-	    	    	is_room = 1;
+			char chdir[256];
+			sprintf(chdir, "%s/%s", dcpath, channel);
+		        struct dirent *de;
+		  
+		        DIR *dr = opendir(chdir); 
+		  
+		        if (dr == NULL) { 
+			    printf("Could not open current directory" ); 
+		        } 
+		   
+		        while ((de = readdir(dr)) != NULL) {
+			    if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, "admin") == 0) {
+			    	continue;
+			    }
+			    if(strcmp(de->d_name, c2) == 0) {
+			    	room_exists = 1;
+			    }
+		  	}
+		  	if(room_exists == 1) { 
+	    	    	    sprintf(right, "[%s/%s/%s]", name, channel, c2);
+	    	    	    strcpy(room, c2);
+	    	    	    is_room = 1;
+	    	    	    
+			    char logpath[256];
+			    sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+			    time_t current_time = time(NULL);
+			    struct tm *local_time = localtime(&current_time);
+			    char date[25];
+			    strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			    FILE *flog = fopen(logpath, "a+");
+			    fprintf(flog, "[%s] %s masuk ke room %s\n", date, name, c2);
+			    fclose(flog);
+		  	}
+		  	else {
+		  	    printf("Room tidak ditemukan\n");
+		  	}
+		  	//comment this if this doesn't work
+		  	room_exists = 0;
 	    	    }
 		}
 		else {
@@ -304,33 +423,42 @@ int main(int argc, char *argv[]) {
 			perror("Connection failed");
 			exit(EXIT_FAILURE);
 		    }
-		    //printf("Sent: %s\n", channel);
-		    if (send(sock, &input, sizeof(input), 0) < 0) {
-		        perror("Send failed");
-		        exit(EXIT_FAILURE);
-		    }
-		    if (send(sock, &rank, sizeof(rank), 0) < 0) {
-		        perror("Send failed");
-		        exit(EXIT_FAILURE);
-		    }
-		    if (send(sock, &name, sizeof(name), 0) < 0) {
-		        perror("Send failed");
-		        exit(EXIT_FAILURE);
-		    }
-		    if (send(sock, &channel, sizeof(channel), 0) < 0) {
+
+    		    sprintf(agg, "%s|%s|%s|%d|%d|%s|%s", input, rank, name, is_channel, is_room, channel, room);
+		    
+		    if (send(sock, &agg, sizeof(agg), 0) < 0) {
 		        perror("Send failed");
 		        exit(EXIT_FAILURE);
 		    }
 		    
-		    if (send(sock, &room, sizeof(room), 0) < 0) {
-		        perror("Send failed");
-		        exit(EXIT_FAILURE);
-		    }
 		    if (recv(sock, &result, sizeof(result), 0) < 0) {
 		        perror("Receive failed");
 		        exit(EXIT_FAILURE);
 		    }
-		    printf("%s\n", result);
+
+		    if(strstr(result, "|")) {
+		    	char *splitted[2];
+		    	char new_name[40], split_result[256];
+
+		    	split_string(result, splitted, "|");
+		    	sprintf(new_name, "%s", splitted[0]);
+		    	sprintf(split_result, "%s", splitted[1]);
+		    	
+		    	if((is_channel == 1) && (is_room == 0)) { //saat di channel
+		    	    sprintf(right, "[%s/%s]", new_name, channel);
+		    	}
+		    	else if((is_channel == 1) && (is_room == 1)) { //saat di room
+		    	    sprintf(right, "[%s/%s/%s]", new_name, channel, room);
+		    	}
+		    	else if((is_channel == 0) && (is_room == 0)) { //tidak masuk di channel (masih di luar)
+		    	    sprintf(right, "[%s]", new_name);
+		    	}
+		    	strcpy(name, new_name);
+		    	printf("%s", split_result);
+		    }
+		    else {
+		    	printf("%s", result);
+		    }
 		}
     	    }
     	}
