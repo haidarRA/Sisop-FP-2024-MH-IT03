@@ -2107,3 +2107,71 @@ Jika user biasa (bukan admin channel maupun root) ingin ban user:
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/08690ff4-bbb0-4b3d-94f6-0d799bbf7811)
 
+## 19. Kick User dari Channel
+
+Untu kick user dari channel, user dapat menggunakan command `REMOVE USER <username>` setelah masuk channel. Nama dari user akan langsung dihapus dari file auth.csv di dalam directory channel. Hanya admin channel dan root saja yang bisa menjalankan command ini.
+
+Code:
+```
+		else if ((strcmp(c1, "REMOVE") == 0) && (strcmp(c2, "USER") == 0)) { //kick user dari channel
+		    if(strcmp(is_channel, "0") != 0) {
+		    //if (channel != NULL) {
+			char rankch[40];
+			char authpath[256];
+			sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, channel);
+			FILE *fauth = fopen(authpath, "r+");
+			while(fgets(line, sizeof(line), fauth)) {
+			    if(strstr(line, name)) {
+			        char *rank_channel = split_comma(line, 3);
+			        sprintf(rankch, "%s", rank_channel);
+			        break;
+			    }
+			}
+			fclose(fauth);
+			    
+			if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+                            delete_row(authpath, c3);
+                            reorder_ids(authpath);
+			    sprintf(result, "%s dikick\n", c3);
+			    
+			    char logpath[256];
+			    sprintf(logpath, "%s/%s/admin/user.log", dcpath, channel);
+				
+			    time_t current_time = time(NULL);
+			    struct tm *local_time = localtime(&current_time);
+			    char date[25];
+			    strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			    FILE *flog = fopen(logpath, "a+");
+			    fprintf(flog, "[%s] admin kick %s\n", date, c3);
+			    fclose(flog);
+			}
+			else {
+			    sprintf(result, "Anda tidak mempunyai akses untuk kick user %s\n", c3);
+			}
+		    }
+		    else {
+		    	sprintf(result, "Anda belum masuk channel\n");
+		    }
+		}
+	    	else {
+	    	    sprintf(result, "Invalid command\n");
+	    	}
+	    }	
+```
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/dc4ef86c-1165-404d-9b41-8100f7e914dd)
+
+Isi file auth.csv setelah kick:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/1139edce-e842-402c-b4b2-6c5012e5fea2)
+
+Isi file user.log setelah kick:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/91e8abf7-6247-4573-89e1-8357ea148e76)
+
+Ketika user biasa (bukan admin channel maupun root) ingin kick user lain:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/9dd56573-4ad3-4033-9091-172c17afbb15)
