@@ -680,3 +680,382 @@ Hasil dari edit pada file chat.csv:
 Jika digunakan di luar room:
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/bcc798f7-526a-4133-b0d8-c9a067ce6bc5)
+
+## 9. Delete Chat
+
+Untuk delete chat pada room, user dapat menggunakan command `DEL CHAT <id>`. Untuk command ini, hanya root atau admin yang dapat menggunakan.
+
+Code:
+```
+		else if ((strcmp(c1, "DEL") == 0) && (strcmp(c2, "CHAT") == 0)) { //delete chat
+		    if(strcmp(is_room, "0") != 0) {
+		        char rankch[40];
+		        char authpath[256];
+		        sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, channel);
+		        FILE *fauth = fopen(authpath, "r+");
+		        while(fgets(line, sizeof(line), fauth)) {
+		        	if(strstr(line, name)) {
+		        	    char *rank_channel = split_comma(line, 3);
+		        	    sprintf(rankch, "%s", rank_channel);
+		        	    break;
+		        	}
+		        }
+		        fclose(fauth);
+		    
+		        if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+		    	    char chatpath[256];
+		    	    sprintf(chatpath, "%s/%s/%s/chat.csv", dcpath, channel, room);
+                    
+                            int line_count = 0;
+
+                            char line[256];
+                            FILE *fchat = fopen(chatpath, "a+");
+                            while (fgets(line, sizeof(line), fchat)) {
+			        line_count++;
+                            }
+                            fclose(fchat);
+
+			    int target_id = atoi(c3);
+
+                            if (target_id > line_count) {
+			        sprintf(result, "Chat ID %s tidak ditemukan\n", c3);
+                            } 
+                            else {
+                                delete_chat(chatpath, c3);
+                                reorder_chat(chatpath);
+                    	    }
+		        }
+		        else {
+		    	    sprintf(result, "Anda tidak mempunyai akses untuk menghapus chat ID %s\n", c3);
+		        }
+		    }
+		    else {
+			sprintf(result, "Anda masih belum masuk room\n");
+		    }
+                }
+```
+
+Pada code ini, rank/role channel dari user akan dicek terlebih dahulu dengan bantuan function `split_comma`. Jika user adalah admin pada channel atau root, maka nanti akan bisa menghapus chat. Namun, jika user adalah user biasa, maka user tidak bisa delete chat. Code ini menggunakan bantuan function `delete_chat` dan `reorder_dhat`.
+
+Utility function:
+```
+void delete_chat(const char *csvpath, const char *id) {
+    FILE *file = fopen(csvpath, "r");
+    
+    char temp_filepath[256];
+    snprintf(temp_filepath, sizeof(temp_filepath), "%s.temp", csvpath);
+    FILE *temp = fopen(temp_filepath, "w");
+
+    if (file == NULL || temp == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        char check_id[30];
+        sprintf(check_id, ",%s,", id);
+        if (!strstr(line, check_id)) {
+            fprintf(temp, "%s", line);
+        }
+    }
+
+    fclose(file);
+    fclose(temp);
+
+    remove(csvpath);
+    rename(temp_filepath, csvpath);
+}
+
+void reorder_chat(const char *filepath) {
+    FILE *file = fopen(filepath, "r");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    char temp_filepath[256];
+    snprintf(temp_filepath, sizeof(temp_filepath), "%s.temp", filepath);
+    FILE *temp_file = fopen(temp_filepath, "w");
+    if (!temp_file) {
+        perror("Error opening temporary file");
+        fclose(file);
+        return;
+    }
+
+    char line[512];
+    int id = 1;
+    while (fgets(line, sizeof(line), file)) {
+        char *first_comma = strchr(line, ',');
+        if (first_comma) {
+            char *second_comma = strchr(first_comma + 1, ',');
+            if (second_comma) {
+                fprintf(temp_file, "%.*s,%d%s", (int)(first_comma - line), line, id, second_comma);
+                id++;
+            }
+        }
+    }
+
+    fclose(file);
+    fclose(temp_file);
+
+    if (remove(filepath) != 0) {
+        perror("Error deleting the original file");
+        return;
+    }
+    if (rename(temp_filepath, filepath) != 0) {
+        perror("Error renaming the temporary file");
+        return;
+    }
+}
+```
+
+Function `delete_chat` berfungsi untuk menghapus baris chat berdasarkan ID dari chat. Sedangkan untuk function `reorder_chat` berfungsi untuk mengurutkan kembali ID chat pada file chat.csv pada directory room.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/f8095462-3862-4f65-b94b-54f148d8492e)
+
+Hasil pada file csv setelah delete:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/c48e6d32-1731-47a0-8deb-d6311b8c2333)
+
+Jika digunakan oleh user biasa:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/20e156c4-008d-4de8-b4fd-964a96ce596b)
+
+Jika digunakan di luar room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/1c4ee957-7e15-43f9-aaf1-75c4a7732c05)
+
+## 10. Edit User
+
+Untuk edit username maupun password yang ada di DiscorIT, dapat menggunakan command `EDIT WHERE <username> -u <new_username>` untuk mengganti username dari sebuah user atau `EDIT WHERE <username> -p <new_password>` untuk mengganti password dari sebuah user.
+Untuk command ini, hanya user root saja yang bisa menggunakan.
+
+Code:
+```
+		else if((strcmp(c1, "EDIT") == 0) && (strcmp(c2, "WHERE") == 0) && (strcmp(c4, "-u") == 0)) { //edit nama user
+		    if(strstr(rank, "ROOT")) {
+	    	    	char userpath[256];
+	    	    	sprintf(userpath, "%s/users.csv", dcpath);
+	    	    	
+	    	    	int user_exists = 0;
+	    	    	
+		        FILE *fuser = fopen(userpath, "r");
+	    	    	char line[256];
+	    	    	while(fgets(line, sizeof(line), fuser)) {
+	    	    	    if(strstr(line, c3)) {
+	    	    	    	user_exists = 1;
+	    	    	    	break;
+	    	    	    }
+	    	    	}
+	    	    	
+                        if (!user_exists) {
+			    sprintf(result, "User %s tidak ditemukan\n", c3);
+                        } 
+                        else {
+                            edit_username(userpath, c3, c5);
+			    struct dirent *de;
+			  
+			    DIR *dr = opendir(dcpath); 
+			  
+			    if (dr == NULL) { 
+				printf("Could not open current directory" ); 
+			    } 
+			   	
+			    while ((de = readdir(dr)) != NULL) {
+				if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, "admin") == 0) {
+				    continue;
+				}
+				else {
+				    char user_channel[256];
+				    sprintf(user_channel, "%s/%s/admin/auth.csv", dcpath, de->d_name);
+				    edit_username(user_channel, c3, c5);
+				}
+			    }
+			    closedir(dr);   
+		    	    sprintf(result, "%s berhasil diubah menjadi %s\n", c3, c5);
+                    	}
+                    }
+                    else {
+		    	sprintf(result, "Anda tidak mempunyai akses untuk mengubah user %s\n", c3);
+                    }
+                }
+		else if((strcmp(c1, "EDIT") == 0) && (strcmp(c2, "WHERE") == 0) && (strcmp(c4, "-p") == 0)) { //edit pass user
+		    if(strstr(rank, "ROOT")) {
+	    	    	char userpath[256];
+	    	    	sprintf(userpath, "%s/users.csv", dcpath);
+	    	    	
+	    	    	int user_exists = 0;
+	    	    	
+		        FILE *fuser = fopen(userpath, "r");
+	    	    	char line[256];
+	    	    	while(fgets(line, sizeof(line), fuser)) {
+	    	    	    if(strstr(line, c3)) {
+	    	    	    	user_exists = 1;
+	    	    	    	break;
+	    	    	    }
+	    	    	}
+	    	    	
+                        if (!user_exists) {
+			    sprintf(result, "User %s tidak ditemukan\n", c3);
+                        } 
+                        else {
+			    char *buser = crypt(c5, SALT);
+			
+			    if (buser == NULL) {
+			      perror("crypt");
+			      return 1;
+			    }
+			    
+                            edit_password(userpath, c3, buser);
+		    	    sprintf(result, "password %s berhasil diubah\n", c3);
+                    	}
+                    }
+                    else {
+		    	sprintf(result, "Anda tidak mempunyai akses untuk mengubah user %s\n", c3);
+                    }
+                }
+```
+
+Code ini akan mengubah nama dari user (untuk command `EDIT WHERE <username> -u <new_username>' tidak hanya di file users.csv saja, tetapi juga username yang ada di file auth.csv di dalam directory channel. Untuk code ini menggunakan bantuan function edit_username dan edit_password.
+
+Utility function:
+```
+void edit_username(const char *csvpath, const char *old_substring, const char *new_substring) {
+    FILE *file = fopen(csvpath, "r");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    char temp_filepath[256];
+    snprintf(temp_filepath, sizeof(temp_filepath), "%s.temp", csvpath);
+    FILE *temp_file = fopen(temp_filepath, "w");
+    if (!temp_file) {
+        perror("Error opening temporary file");
+        fclose(file);
+        return;
+    }
+
+    char line[512];
+    while (fgets(line, sizeof(line), file)) {
+        char *token;
+        char *rest = line;
+        int count = 0;
+        int token_index = 0;
+        char modified_line[512];
+
+        while ((token = strtok_r(rest, ",", &rest))) {
+            count++;
+            if (count == 2 && strcmp(token, old_substring) == 0) {
+                snprintf(modified_line + token_index, sizeof(modified_line) - token_index, "%s,", new_substring);
+                token_index += strlen(new_substring) + 1;
+            } else {
+                snprintf(modified_line + token_index, sizeof(modified_line) - token_index, "%s,", token);
+                token_index += strlen(token) + 1; 
+            }
+        }
+
+        if (modified_line[token_index - 1] == ',') {
+            modified_line[token_index - 1] = '\0';
+        }
+
+        fputs(modified_line, temp_file);
+    }
+
+    fclose(file);
+    fclose(temp_file);
+
+    if (remove(csvpath) != 0) {
+        perror("Error deleting the original file");
+        return;
+    }
+    if (rename(temp_filepath, csvpath) != 0) {
+        perror("Error renaming the temporary file");
+        return;
+    }
+}
+
+void edit_password(const char *csvpath, const char *username, const char *new_pass) {
+    FILE *file = fopen(csvpath, "r");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    char temp_filepath[256];
+    snprintf(temp_filepath, sizeof(temp_filepath), "%s.temp", csvpath);
+    FILE *temp_file = fopen(temp_filepath, "w");
+    if (!temp_file) {
+        perror("Error opening temporary file");
+        fclose(file);
+        return;
+    }
+
+    char line[512];
+    while (fgets(line, sizeof(line), file)) {
+        char *token;
+        char *rest = line;
+        int count = 0;
+        int token_index = 0;
+        char modified_line[512] = {0};
+        char current_username[256] = {0};
+
+        while ((token = strtok_r(rest, ",", &rest))) {
+            count++;
+            if (count == 2) {
+                strncpy(current_username, token, sizeof(current_username) - 1);
+            }
+            if (count == 3 && strcmp(current_username, username) == 0) {
+                snprintf(modified_line + token_index, sizeof(modified_line) - token_index, "%s,", new_pass);
+                token_index += strlen(new_pass) + 1;
+            } 
+            else {
+                snprintf(modified_line + token_index, sizeof(modified_line) - token_index, "%s,", token);
+                token_index += strlen(token) + 1;
+            }
+        }
+
+        if (modified_line[token_index - 1] == ',') {
+            modified_line[token_index - 1] = '\0';
+        }
+
+        fputs(modified_line, temp_file);
+    }
+
+    fclose(file);
+    fclose(temp_file);
+
+    if (remove(csvpath) != 0) {
+        perror("Error deleting the original file");
+        return;
+    }
+    if (rename(temp_filepath, csvpath) != 0) {
+        perror("Error renaming the temporary file");
+        return;
+    }
+}
+```
+
+Kedua function ini menggunakan string token untuk mengubah username dan password.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/b5668b16-5274-4046-aa55-98a94b20cc7d)
+
+Hasil setelah edit (username dan password):
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/dcec1121-6b8e-4d46-869d-be83f061e345)
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/a3a6729b-bf4c-4e61-b9a2-5a7748c819d5)
+
+Isi dari file users.csv:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/00a17086-10cf-41ed-842a-850d1ab7ffe4)
+
+Isi dari file auth.csv pada directory channel sisop:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/29f20149-6cc7-4c5a-923e-dcf6b23438db)
+
