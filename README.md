@@ -2254,3 +2254,11 @@ Setelah ada chat baru, maka tampilan chat pada program monitor.c juga akan diper
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/f616cbc5-d1f5-4c4e-a4f2-25925cab6d39)
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/8727eca6-1348-4854-9d43-3f89cf7cd161)
+
+# Permasalahan yang dihadapi saat pengerjaan
+
+Untuk permasalahan kami ada beberapa saat pengerjaan, yaitu sebagai berikut.
+1. Terkadang server tidak memberi output ke client (kadang null, kadang kosong, dan sebagainya).
+2. Server memberikan output string acak (kebanyakan mengandung simbol �) di depan output yang asli.
+3. Saat membuat channel, nama admin pertama pada channel tersebut yang tesimpan di file auth.csv inkonsisten (kadang ada, kadang kosong / tidak ada).
+4. Saat mencoba untuk mengirimkan command dari client ke server, ada masalah dimana tidak bisa input command lagi di input (seperti client DiscorIT sudah tidak berfungsi lagi).
