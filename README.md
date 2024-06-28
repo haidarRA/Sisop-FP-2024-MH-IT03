@@ -1283,3 +1283,283 @@ Jika ingin membuat channel yang sudah ada:
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/0afdcc53-a195-4e14-b876-a12465c68c46)
 
+## 13. Edit Channel
+
+Untuk mengubah channel pada sebuah channel, user dapat menggunakan command `EDIT CHANNEL <nama_lama> TO <nama_baru>`. Hanya admin dari channel dan root yang dapat menggunakan command ini.
+
+Code:
+```
+		else if((strcmp(c1, "EDIT") == 0) && (strcmp(c2, "CHANNEL") == 0) && (strcmp(c4, "TO") == 0)) { //edit channel
+		    char rankch[40];
+		    char authpath[256];
+		    sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, c3);
+		    FILE *fauth = fopen(authpath, "r+");
+		    while(fgets(line, sizeof(line), fauth)) {
+		    	if(strstr(line, name)) {
+		    	    char *rank_channel = split_comma(line, 3);
+		    	    sprintf(rankch, "%s", rank_channel);
+		    	    break;
+		    	}
+		    }
+		    fclose(fauth);
+		    
+		    if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+                        char chpathd[256];
+                        sprintf(chpathd, "%s/%s", dcpath, c3);
+                    
+                        char chpath[256];
+                        sprintf(chpath, "%s/channels.csv", dcpath);
+                    
+                        FILE *fch = fopen(chpath, "a+");
+                        if (fch == NULL) {
+                            sprintf(result, "Channel %s tidak ditemukan\n", c3);
+                            send(new_socket, result, sizeof(result), 0);
+                            continue;
+                        }
+                    
+                        int channel_exists = 0;
+                        while(fgets(line, sizeof(line), fch)) {
+                            if(strstr(line, c3)) {
+                                channel_exists = 1;
+                            }
+                        }
+                        fclose(fch);
+                    
+                        if((directory_exists(chpathd) == 1) && (channel_exists == 1)) {
+                            edit_channel(chpath, c3, c5);  
+                        
+                            char newpath[256];
+                            sprintf(newpath, "%s/%s", dcpath, c5);
+                            rename(chpathd, newpath);
+                        
+                            sprintf(result, "Channel %s berhasil diubah menjadi %s\n", c3, c5);
+                            
+			    char logpath[256];
+			    sprintf(logpath, "%s/%s/admin/user.log", dcpath, c5);
+				
+			    time_t current_time = time(NULL);
+			    struct tm *local_time = localtime(&current_time);
+			    char date[25];
+			    strftime(date, 25, "%d/%m/%Y %H:%M:%S", local_time);
+				
+			    FILE *flog = fopen(logpath, "a+");
+			    fprintf(flog, "[%s] admin edit channel %s jadi %s\n", date, c3, c5);
+			    fclose(flog);
+                        }
+                        else {
+                            sprintf(result, "Channel %s tidak ditemukan\n", c3);
+                        }
+                    }
+                    else {
+		    	sprintf(result, "Anda tidak mempunyai akses untuk mengubah channel %s\n", c3);
+                    }
+                }
+```
+
+Code ini akan mengganti nama directory channel dan nama channel pada file channels.csv dengan bantuan functrion `edit_channel`. Setelah mengedit nama channel, akan ada log untuk perubahan nama channel yang disimpan di file user.log di dalam directory channel.
+
+Utility function:
+```
+void edit_channel(const char *filepath, const char *old_name, const char *new_name) {
+    FILE *file = fopen(filepath, "r");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    char temp_filepath[256];
+    snprintf(temp_filepath, sizeof(temp_filepath), "%s.temp", filepath);
+    FILE *temp_file = fopen(temp_filepath, "w");
+    if (!temp_file) {
+        perror("Error opening temporary file");
+        fclose(file);
+        return;
+    }
+
+    char line[512];
+    while (fgets(line, sizeof(line), file)) {
+        char *pos = strstr(line, old_name);
+        if (pos) {
+            size_t old_name_len = strlen(old_name);
+            size_t new_name_len = strlen(new_name);
+            size_t pos_index = pos - line;
+
+            fwrite(line, 1, pos_index, temp_file);
+
+            fwrite(new_name, 1, new_name_len, temp_file);
+
+            fwrite(pos + old_name_len, 1, strlen(pos + old_name_len), temp_file);
+        } 
+        else {
+            fputs(line, temp_file);
+        }
+    }
+
+    fclose(file);
+    fclose(temp_file);
+
+    if (remove(filepath) != 0) {
+        perror("Error deleting the original file");
+        return;
+    }
+    if (rename(temp_filepath, filepath) != 0) {
+        perror("Error renaming the temporary file");
+        return;
+    }
+}
+```
+
+Function `edit_channel` dapat mengubah nama dari channel pada file channels.csv dengan string token.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/1c586613-2916-4909-b333-428f28ffc348)
+
+Hasil setelah edit channel:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/9ff5a00a-24c8-4dd7-b041-aefe05d7aed6)
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/d42c376c-e8df-4d6f-99da-d7eb608e8ca6)
+
+Isi file user.log setelah edit nama channel:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/ab3f1273-ec12-47b4-bd1a-bba68e745c27)
+
+Jika user biasa (bukan admin pada channel maupun root) ingin mengubah nama channel:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/34ba89b9-f73c-43e7-ab91-edb43844d9c8)
+
+## 14. Delete Channel
+
+Untuk delete channel, user dapat menggunakan command `DEL CHANNEL <nama_channel>` setelah login. Setelah menjalankan command, maka directory channel dan nama channel pada file channels.csv akan dihapus. Hanya admin channel dan root saja yang dapat menjalankan kode ini.
+
+Code:
+```
+		if ((strcmp(c1, "DEL") == 0) && (strcmp(c2, "CHANNEL") == 0)) { //delete channel
+		    char rankch[40];
+		    char authpath[256];
+		    sprintf(authpath, "%s/%s/admin/auth.csv", dcpath, c3);
+		    FILE *fauth = fopen(authpath, "r+");
+		    while(fgets(line, sizeof(line), fauth)) {
+		    	if(strstr(line, name)) {
+		    	    char *rank_channel = split_comma(line, 3);
+		    	    sprintf(rankch, "%s", rank_channel);
+		    	    break;
+		    	}
+		    }
+		    fclose(fauth);
+		    
+		    if((strstr(rank, "ROOT")) || (strstr(rankch, "ROOT")) || (strstr(rankch, "ADMIN"))) {
+                        char chpath[256];
+                        sprintf(chpath, "%s/channels.csv", dcpath);
+                    
+                        char temppath[256];
+                        sprintf(temppath, "%s/temp.csv", dcpath);
+                    
+                        int channel_exists = 0;
+                        FILE *fch = fopen(chpath, "a+");
+                        if (!fch) {
+                            perror("Error opening channels file");
+                            continue;
+                        }
+
+                        char line[256];
+                        while (fgets(line, sizeof(line), fch)) {
+                            if (strstr(line, c3)) {
+                                channel_exists = 1;
+                                break;
+                            }
+                        }
+
+                        if (!channel_exists) {
+			    sprintf(result, "Channel %s tidak ditemukan\n", c3);
+                        } 
+                        else {
+                            delete_row(chpath, c3);
+                            reorder_ids(chpath);
+
+                            char path[256];
+                            snprintf(path, sizeof(path), "%s/%s", dcpath, c3);
+                            if (directory_exists(path)) {
+                                int ret = remove_directory(path);
+                                if (ret == 0) {
+		    		    sprintf(result, "%s berhasil dihapus\n", c3);
+                                } 
+                                else {
+                                    sprintf(result, "Failed to delete channel %s\n", c3);
+                                }
+                            } 
+                            else {
+			    	sprintf(result, "Channel %s tidak ditemukan\n", c3);
+                            }
+                    	}
+		    }
+		    else {
+		    	sprintf(result, "Anda tidak mempunyai akses untuk menghapus channel %s\n", c3);
+		    }
+                }
+```
+
+Code ini akan melakukan penghapusan directory channel dan nama channel pada file channels.csv dengan bantuan function `delete_row`, `reorder_ids`, dan `remove_directory`.
+
+Utility function:
+```
+int remove_directory(const char *path) {
+   DIR *d = opendir(path);
+   size_t path_len = strlen(path);
+   int r = -1;
+
+   if (d) {
+      struct dirent *p;
+
+      r = 0;
+      while (!r && (p=readdir(d))) {
+          int r2 = -1;
+          char *buf;
+          size_t len;
+
+          if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+             continue;
+
+          len = path_len + strlen(p->d_name) + 2; 
+          buf = malloc(len);
+
+          if (buf) {
+             struct stat statbuf;
+
+             snprintf(buf, len, "%s/%s", path, p->d_name);
+             if (!stat(buf, &statbuf)) {
+                if (S_ISDIR(statbuf.st_mode))
+                   r2 = remove_directory(buf);
+                else
+                   r2 = unlink(buf);
+             }
+             free(buf);
+          }
+          r = r2;
+      }
+      closedir(d);
+   }
+
+   if (!r)
+      r = rmdir(path);
+
+   return r;
+}
+```
+
+Function `remove directory` akan melakukan penghapusan directory beserta subdirectory secara rekursif.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/b7009837-700d-42b9-a733-4abd614ad2df)
+
+Hasil setelah penghapusan channel:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/21a74bd6-12a5-46bf-910c-23a20a66143c)
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/f6f53c50-ea23-4fc7-9a08-0f590b54792d)
+
+Jika user biasa (bukan admin channel maupun root) ingin menghapus channel:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/808423cb-1bdd-492e-bddb-a0b25e93e719)
