@@ -377,6 +377,7 @@ void edit_chat(const char *csvpath, int id, const char *new_chat) {
                 snprintf(modified_line + token_index, sizeof(modified_line) - token_index, "%s,", new_chat);
                 token_index += strlen(new_chat) + 1;
             } else {
+                // Copy other fields as is
                 snprintf(modified_line + token_index, sizeof(modified_line) - token_index, "%s,", token);
                 token_index += strlen(token) + 1;
             }
@@ -1255,7 +1256,7 @@ int main() {
                     	    }
 		        }
 		        else {
-		    	    sprintf(result, "Anda tidak mempunyai akses untuk menghapus chat ID %s\n", c3);
+		    	    sprintf(result, "Anda tidak mempunyai akses untuk menghapus room %s\n", c3);
 		        }
 		    }
 		    else {
@@ -1320,7 +1321,7 @@ int main() {
 		            fclose(flog);
 		        }
 		        else {
-		    	    sprintf(result, "Anda tidak mempunyai akses untuk menghapus chat ID %s\n", c3);
+		    	    sprintf(result, "Anda tidak mempunyai akses untuk menghapus semua room\n");
 		        }
 		    }
 		    else {
@@ -1715,7 +1716,7 @@ int main() {
                     	    }
 		        }
 		        else {
-		    	    sprintf(result, "Anda tidak mempunyai akses untuk menghapus chat ID %s\n", c3);
+		    	    sprintf(result, "Anda tidak mempunyai akses untuk edit room %s\n", c3);
 		        }
 		    }
 		    else {
