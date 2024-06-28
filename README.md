@@ -1059,3 +1059,7 @@ Isi dari file auth.csv pada directory channel sisop:
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/29f20149-6cc7-4c5a-923e-dcf6b23438db)
 
+Jika digunakan oleh user biasa:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/9c7e5113-190d-477c-9b36-751da256ffde)
+
