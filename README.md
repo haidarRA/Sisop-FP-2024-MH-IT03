@@ -525,3 +525,158 @@ Isi dari file chat.csv setelah chat dikirim:
 Jika mencoba untuk chat di luar room:
 
 ![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/850f866f-73d9-4382-a10d-f551cd48fc32)
+
+## 7. See Chat
+
+User dapat menampilkan seluruh chat pada sebuah room dengan menggunakan command `SEE CHAT` setelah masuk room.
+
+Code:
+
+```
+		else if ((strcmp(c1, "SEE") == 0) && (strcmp(c2, "CHAT") == 0)) { //see chat
+		    if (strcmp(is_room, "0") != 0) {
+		    //if (room != NULL) {
+			char chatpath[256];
+			sprintf(chatpath, "%s/%s/%s/chat.csv", dcpath, channel, room);
+		        
+		        char *chat_date, *chat_id, *chat_username, *chat_content, mod_line[256];
+			FILE *fchat = fopen(chatpath, "r");
+			while (fgets(line, sizeof(line), fchat)) {
+    			    split_view(line, &chat_date, &chat_id, &chat_username, &chat_content);
+    			    chat_content[strcspn(chat_content, "\n")] = '\0';
+    			    
+			    sprintf(mod_line, "[%s][%s][%s] %s", chat_date, chat_id, chat_username, chat_content);
+			    strcat(result, mod_line);
+			    strcat(result, "\n");
+			    strcpy(mod_line, "");
+			}
+			fclose(fchat);
+		    } 
+		    else {
+			sprintf(result, "Anda masih belum masuk room\n");
+		    }
+		}
+```
+
+Utility Function:
+```
+void split_view(char* str, char** c1, char** c2, char** c3, char** c4) {
+    *c1 = strtok(str, ",");
+    *c2 = strtok(NULL, ",");
+    *c3 = strtok(NULL, ",");
+    *c4 = strtok(NULL, ",");
+}
+```
+
+Code ini akan membaca dan menampilkan isi dari file chat.csv di dalam directory room. Sedangkan function split_view berfungsi untuk memisahkan line yang didapatkan dari file chat.csv pada directory room.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/58ae42ab-48f1-4221-91b8-5b481dbca2c4)
+
+Jika digunakan di luar room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/9d616f02-42aa-472c-b7a0-593332143b7f)
+
+## 8. Edit Chat
+
+Untuk edit chat, user dapat menggunakan command `EDIT CHAT <id> "<chat_baru>"`.
+
+Code:
+```
+		if ((strcmp(c1, "EDIT") == 0) && (strcmp(c2, "CHAT") == 0)) { //edit chat
+		    if (strcmp(is_room, "0") != 0) {
+		    //if (room != NULL) {
+			char chatpath[256];
+			sprintf(chatpath, "%s/%s/%s/chat.csv", dcpath, channel, room);
+
+			int id_chat = atoi(c3);
+
+			edit_chat(chatpath, id_chat, c4);
+		    } 
+		    else {
+			sprintf(result, "Anda masih belum masuk room\n");
+		    }
+		}
+```
+
+Utility function:
+```
+void edit_chat(const char *csvpath, int id, const char *new_chat) {
+    FILE *file = fopen(csvpath, "r");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    char temp_filepath[256];
+    snprintf(temp_filepath, sizeof(temp_filepath), "%s.temp", csvpath);
+    FILE *temp_file = fopen(temp_filepath, "w");
+    if (!temp_file) {
+        perror("Error opening temporary file");
+        fclose(file);
+        return;
+    }
+
+    char line[512];
+    while (fgets(line, sizeof(line), file)) {
+        char *token;
+        char *rest = line;
+        int count = 0;
+        int token_index = 0;
+        char modified_line[512] = {0};
+        int current_id = -1;
+
+        while ((token = strtok_r(rest, ",", &rest))) {
+            count++;
+            if (count == 2) {
+                current_id = atoi(token);
+            }
+            if (count == 4 && current_id == id) {
+                snprintf(modified_line + token_index, sizeof(modified_line) - token_index, "%s,", new_chat);
+                token_index += strlen(new_chat) + 1;
+            } else {
+                // Copy other fields as is
+                snprintf(modified_line + token_index, sizeof(modified_line) - token_index, "%s,", token);
+                token_index += strlen(token) + 1;
+            }
+        }
+
+        if (modified_line[token_index - 1] == ',') {
+            modified_line[token_index - 1] = '\0';
+        }
+        
+        if(current_id == id) {
+            strcat(modified_line, "\n");
+        }
+
+        fputs(modified_line, temp_file);
+    }
+
+    fclose(file);
+    fclose(temp_file);
+
+    if (remove(csvpath) != 0) {
+        perror("Error deleting the original file");
+        return;
+    }
+    if (rename(temp_filepath, csvpath) != 0) {
+        perror("Error renaming the temporary file");
+        return;
+    }
+}
+```
+
+Untuk code edit chat ini menggunakan bantuan dari function `edit_chat`. Function `edit_chat` berfungsi untuk mencari line dari chat berdasarkan id, kemudian mengganti isi dari chat itu dengan menggunakan string token.
+
+Demonstrasi:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/9f25a1c5-9731-4042-ba91-479c456d841f)
+
+Hasil dari edit pada file chat.csv:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/0cdecf19-a745-424f-87f1-b451b0dff5c6)
+
+Jika digunakan di luar room:
+
+![image](https://github.com/haidarRA/Sisop-FP-2024-MH-IT03/assets/149871906/bcc798f7-526a-4133-b0d8-c9a067ce6bc5)
